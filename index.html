@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Cricket League 3D</title>
+    <!-- High-quality rendering libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.7.1/dist/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+    <!-- Three.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- 3D Renderer -->
+    <script src="3d-renderer.js"></script>
+    <!-- Stadium3D Adapter -->
+    <script src="stadium3d-adapter.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #294D61, #6DD5ED, #294D61);
+            background-size: 600% 600%;
+            animation: gradientBG 15s ease infinite;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Bubblegum Sans', cursive;
+        }
+        
+        .game-title {
+            text-shadow: 3px 3px 0px #ff9933, 6px 6px 0px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        @keyframes shine {
+            0% { background-position: -100px; }
+            60%, 100% { background-position: 500px; }
+        }
+        
+        /* 3D stadium container */
+        #stadium-3d-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* Game elements with enhanced styling */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin-bottom: 2rem;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* High-quality glass card effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Team selection card with 3D effect */
+        .team-card {
+            perspective: 1000px;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .team-card:hover {
+            transform: rotateY(10deg) scale(1.05);
+        }
+        
+        .team-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%);
+            border-radius: inherit;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        /* High-quality 3D buttons */
+        .btn-3d {
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 
+                0 6px 10px rgba(0, 0, 0, 0.15),
+                0 3px 6px rgba(0, 0, 0, 0.1),
+                0 0 1px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            border: none;
+        }
+        
+        .btn-3d::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.2) 50%, 
+                rgba(255,255,255,0) 100%
+            );
+            transform: skewX(-15deg);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-3d:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 20px rgba(0, 0, 0, 0.2),
+                0 6px 10px rgba(0, 0, 0, 0.15),
+                0 0 1px rgba(0, 0, 0, 0.4);
+        }
+        
+        .btn-3d:hover::before {
+            left: 100%;
+        }
+        
+        .btn-3d:active {
+            transform: translateY(1px);
+            box-shadow: 
+                0 3px 6px rgba(0, 0, 0, 0.1),
+                0 1px 3px rgba(0, 0, 0, 0.08),
+                0 0 1px rgba(0, 0, 0, 0.4);
+        }
+        
+        /* Rest of existing styles with enhancements */
+        
+        /* Particle effect for stadium */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0.8;
+            mix-blend-mode: screen;
+            animation: particle-float 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes particle-float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(10px, -10px) rotate(360deg); }
+        }
+        
+        /* High-quality loading animation */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #FFF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Existing animations and styles can remain */
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #6dd5ed, #2193b0, #6dd5ed);
+            background-size: 600% 600%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Bubblegum Sans', cursive;
+        }
+        
+        .game-title {
+            text-shadow: 3px 3px 0px #ff9933, 6px 6px 0px rgba(0,0,0,0.2);
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        
+        @keyframes shine {
+            0% { background-position: -100px; }
+            60%, 100% { background-position: 500px; }
+        }
+        
+        .team-logo {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+        }
+        
+        .team-logo:hover {
+            transform: scale(1.15) rotate(5deg);
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
+        }
+        
+        .fireworks {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            animation: explode 1s forwards;
+            opacity: 0;
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(25); opacity: 0; }
+        }
+        
+        .shine-button {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shine-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100px;
+            width: 80px;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shine 3s infinite;
+        }
+        
+        .stadium {
+            background-image: 
+                radial-gradient(circle, #4caf5066 0%, #388e3c66 100%), 
+                repeating-linear-gradient(45deg, #4caf5033, #4caf5033 10px, #388e3c33 10px, #388e3c33 20px);
+        }
+        
+        .pitch {
+            box-shadow: 0 0 15px rgba(255, 255, 200, 0.5);
+        }
+        
+        /* Ball trail effect */
+        #ball {
+            position: absolute;
+            box-shadow: inset -5px -5px 0px rgba(0,0,0,0.2);
+        }
+        
+        #ball::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(255, 107, 107, 0.4);
+            transform: scale(1.5);
+            z-index: -1;
+        }
+        
+        .commentary {
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0073e6, 0 0 20px #0073e6;
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .shot-btn {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .shot-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .shot-btn:active {
+            transform: translateY(2px);
+        }
+        
+        /* Cricket ball seam animation */
+        .ball-seam {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            animation: rotate 1s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 0.7; }
+            to { opacity: 0; transform: scale(1.5); }
+        }
+        
+        @keyframes spin-clockwise {
+            from { transform: translateX(-50%) rotate(0deg); }
+            to { transform: translateX(-50%) rotate(360deg); }
+        }
+        
+        @keyframes spin-counterclockwise {
+            from { transform: translateX(-50%) rotate(0deg); }
+            to { transform: translateX(-50%) rotate(-360deg); }
+        }
+        
+        .camera-shake {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-2px, 0, 0); }
+            40%, 60% { transform: translate3d(2px, 0, 0); }
+        }
+        
+        .spin-clockwise {
+            animation: spin-clockwise 0.8s linear infinite;
+        }
+        
+        .spin-counterclockwise {
+            animation: spin-counterclockwise 0.8s linear infinite;
+        }
+        
+        /* Animal character styles */
+        .animal-character {
+            transition: all 0.3s ease;
+            animation: animalBob 3s infinite ease-in-out;
+        }
+        
+        @keyframes animalBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        
+        /* Stadium with grass texture */
+        .stadium {
+            background-image: 
+                radial-gradient(circle, #4caf5066 0%, #388e3c66 100%), 
+                repeating-linear-gradient(45deg, #4caf5033, #4caf5033 10px, #388e3c33 10px, #388e3c33 20px);
+        }
+        
+        /* Ball with cartoon style */
+        #ball {
+            box-shadow: inset -5px -5px 0px rgba(0,0,0,0.2);
+        }
+        
+        /* Bat with cartoon style */
+        #bat {
+            box-shadow: 2px 2px 0px #000000;
+        }
+        
+        /* Cloud elements */
+        .cloud {
+            filter: drop-shadow(3px 5px 2px rgba(0, 0, 0, 0.1));
+            animation: float-slow 20s linear infinite;
+        }
+        
+        @keyframes float-slow {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100vw); }
+        }
+        
+        /* Animal cricket animations */
+        .batting-action {
+            animation: bat-swing 0.6s ease-in-out;
+        }
+        
+        @keyframes bat-swing {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-20deg) scale(1.1); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        .bowling-action {
+            animation: bowl-action 0.8s ease-in-out;
+        }
+        
+        @keyframes bowl-action {
+            0% { transform: translateY(0); }
+            30% { transform: translateY(-15px) rotate(-5deg); }
+            60% { transform: translateY(0) rotate(5deg); }
+            100% { transform: translateY(0); }
+        }
+        
+        /* Jungle theme elements */
+        .leaf {
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            z-index: 1;
+            opacity: 0.7;
+            animation: falling-leaf 10s linear infinite;
+        }
+        
+        @keyframes falling-leaf {
+            0% { 
+                top: -10px;
+                transform: translateX(0) rotate(0deg);
+            }
+            100% { 
+                top: 100%;
+                transform: translateX(100px) rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-white overflow-x-hidden">
+    <div id="stars" class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"></div>
+    
+    <!-- Clouds -->
+    <div class="clouds fixed top-0 left-0 w-full h-48 z-0 pointer-events-none overflow-hidden">
+        <div class="cloud absolute w-40 opacity-80 text-white" style="top: 20%; animation-duration: 60s;">
+            <i class="fas fa-cloud fa-5x"></i>
+        </div>
+        <div class="cloud absolute w-32 opacity-70 text-white" style="top: 10%; animation-duration: 80s; animation-delay: 5s;">
+            <i class="fas fa-cloud fa-4x"></i>
+        </div>
+        <div class="cloud absolute w-36 opacity-75 text-white" style="top: 30%; animation-duration: 70s; animation-delay: 10s;">
+            <i class="fas fa-cloud fa-5x"></i>
+        </div>
+    </div>
+    
+    <div id="game-container" class="container mx-auto px-4 py-8 relative z-10">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-6xl font-bold mb-2 text-yellow-300 game-title">Animal Cricket League</h1>
+            <p class="text-xl text-blue-100">The wildest cricket tournament in the jungle!</p>
+        </header>
+
+        <!-- Game Screens (Only one will be visible at a time) -->
+        <div id="welcome-screen" class="text-center">
+            <div class="mb-12">
+                <div class="flex justify-center">
+                    <div class="w-40 h-40 animal-character -mr-8 transform -rotate-6 flex items-center justify-center text-yellow-300">
+                        <i class="fas fa-paw fa-5x"></i>
+                    </div>
+                    <div class="w-48 h-48 animal-character z-10 flex items-center justify-center text-gray-300">
+                        <i class="fas fa-baseball-ball fa-5x"></i>
+                    </div>
+                    <div class="w-40 h-40 animal-character -ml-8 transform rotate-6 flex items-center justify-center text-green-300">
+                        <i class="fas fa-trophy fa-5x"></i>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-blue-900 bg-opacity-40 backdrop-filter backdrop-blur-md rounded-xl shadow-xl border border-blue-700 transform">
+                    <p class="text-lg text-blue-100">Choose your animal team and compete for the jungle championship!</p>
+                </div>
+            </div>
+            <button id="start-game" class="shine-button bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-bold py-4 px-10 rounded-full text-xl transition-all transform hover:scale-105 shadow-xl">Start Game</button>
+        </div>
+
+        <div id="team-selection-screen" class="hidden">
+            <h2 class="text-4xl font-bold mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500">Choose Your Team</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="csk">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-yellow-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-yellow-400">
+                            <i class="fas fa-crown fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-yellow-400">CSK</h3>
+                </div>
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="mi">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-blue-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-blue-400">
+                            <i class="fas fa-water fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-blue-400">MI</h3>
+                </div>
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="rcb">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-red-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-red-400">
+                            <i class="fas fa-fire fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-red-400">RCB</h3>
+                </div>
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="kkr">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-purple-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-purple-400">
+                            <i class="fas fa-horse fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-purple-400">KKR</h3>
+                </div>
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="srh">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-orange-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-orange-400">
+                            <i class="fas fa-sun fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-orange-400">SRH</h3>
+                </div>
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="dc">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-blue-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-blue-400">
+                            <i class="fas fa-bolt fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-blue-400">DC</h3>
+                </div>
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="rr">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-pink-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-pink-400">
+                            <i class="fas fa-chess-rook fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-pink-400">RR</h3>
+                </div>
+                <div class="team-card team-logo p-5 bg-gradient-to-br from-blue-800 to-blue-900 bg-opacity-80 rounded-xl text-center cursor-pointer border-2 border-transparent hover:border-blue-400 transition-all shadow-lg" data-team="pbks">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-red-500 rounded-full opacity-20 blur-md transform scale-90"></div>
+                        <div class="w-28 h-28 mx-auto relative z-10 flex items-center justify-center text-red-400">
+                            <i class="fas fa-shield-alt fa-5x"></i>
+                        </div>
+                    </div>
+                    <h3 class="mt-4 font-bold text-xl text-red-400">PBKS</h3>
+                </div>
+            </div>
+        </div>
+
+        <div id="gameplay-screen" class="hidden">
+            <div class="bg-gradient-to-r from-green-800 to-blue-800 p-4 rounded-2xl shadow-2xl mb-8 border-4 border-yellow-400">
+                <div class="flex justify-between items-center">
+                    <div id="player-team" class="text-xl font-bold flex items-center">
+                        <div class="w-20 h-20 relative flex items-center justify-center">
+                            <div id="player-team-icon" class="w-16 h-16 absolute animal-character flex items-center justify-center text-yellow-300">
+                                <i class="fas fa-shield-alt fa-3x"></i>
+                            </div>
+                            <div class="absolute w-full h-full rounded-full border-4 border-dashed border-yellow-300 animate-spin" style="animation-duration: 20s;"></div>
+                        </div>
+                        <div>
+                            <span id="player-team-name" class="block text-2xl"></span>
+                            <span id="player-score" class="block text-yellow-300 text-2xl">0/0</span>
+                        </div>
+                    </div>
+                    <div class="text-xl">
+                        <span id="current-over" class="bg-green-700 px-4 py-2 rounded-full text-white font-bold shadow-lg border-2 border-yellow-400">Over: 0.0</span>
+                    </div>
+                    <div id="opponent-team" class="text-xl font-bold flex items-center">
+                        <div class="text-right">
+                            <span id="opponent-team-name" class="block text-2xl"></span>
+                            <span id="opponent-score" class="block text-yellow-300 text-2xl">0/0</span>
+                        </div>
+                        <div class="w-20 h-20 relative flex items-center justify-center">
+                            <div id="opponent-team-icon" class="w-16 h-16 absolute animal-character flex items-center justify-center text-blue-300">
+                                <i class="fas fa-bolt fa-3x"></i>
+                            </div>
+                            <div class="absolute w-full h-full rounded-full border-4 border-dashed border-yellow-300 animate-spin" style="animation-duration: 20s;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3D Stadium Container -->
+            <div class="canvas-container">
+                <div id="stadium-3d-container" class="w-full h-full"></div>
+                
+                <!-- Camera angle controls -->
+                <div class="absolute bottom-4 left-4 flex space-x-2 z-10">
+                    <button id="view-standard" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-full text-sm">Standard</button>
+                    <button id="view-batsman" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-full text-sm">Batsman</button>
+                    <button id="view-bowler" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-full text-sm">Bowler</button>
+                    <button id="view-aerial" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-full text-sm">Aerial</button>
+                </div>
+                
+                <!-- Game loading indicator (initially hidden) -->
+                <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-70 z-20">
+                    <div class="text-center">
+                        <span class="loader block mb-4"></span>
+                        <p class="text-white text-xl">Loading 3D Stadium...</p>
+                    </div>
+                </div>
+                
+                <!-- Overlaid UI elements for traditional 2D display as fallback -->
+                <div id="stadium-2d-fallback" class="hidden absolute inset-0 bg-green-800 z-10">
+                    <!-- Standard stadium content as fallback -->
+                    <!-- Batsman with bat icon -->
+                    <div id="animal-batsman" class="hidden absolute h-20 bottom-1/3 right-1/3 flex flex-col items-center justify-center text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="w-16 h-16">
+                            <!-- Cricket batsman figure -->
+                            <circle cx="32" cy="15" r="10" fill="#3B82F6" stroke="#1E40AF" stroke-width="1" /> <!-- Head with helmet -->
+                            <rect x="30" y="14" width="8" height="3" fill="#000000" /> <!-- Helmet visor -->
+                            <rect x="27" y="25" width="10" height="20" fill="#3B82F6" rx="4" /> <!-- Body (blue jersey) -->
+                            <rect x="24" y="45" width="6" height="15" fill="#FFFFFF" rx="2" /> <!-- Left leg (white pants) -->
+                            <rect x="34" y="45" width="6" height="15" fill="#FFFFFF" rx="2" /> <!-- Right leg (white pants) -->
+                            <rect x="20" y="27" width="7" height="4" fill="#3B82F6" rx="2" transform="rotate(30 20 27)" /> <!-- Left arm -->
+                            <!-- Cricket bat -->
+                            <rect x="12" y="27" width="12" height="3" fill="#964B00" rx="1" transform="rotate(30 12 27)" /> <!-- Handle -->
+                            <rect x="5" y="24" width="8" height="18" fill="#C19A6B" rx="1" transform="rotate(30 5 24)" /> <!-- Blade -->
+                        </svg>
+                        <span class="text-xs mt-1 font-bold">BATSMAN</span>
+                    </div>
+                    
+                    <!-- Bowler with ball icon -->
+                    <div id="animal-bowler" class="hidden absolute h-20 top-1/3 left-1/3 flex flex-col items-center justify-center text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="w-16 h-16">
+                            <!-- Cricket bowler figure -->
+                            <circle cx="32" cy="15" r="8" fill="#E2C090" /> <!-- Head -->
+                            <rect x="27" y="24" width="10" height="20" fill="#EF4444" rx="4" /> <!-- Body (red jersey) -->
+                            <rect x="24" y="44" width="6" height="15" fill="#FFFFFF" rx="2" /> <!-- Left leg (white pants) -->
+                            <rect x="34" y="44" width="6" height="15" fill="#FFFFFF" rx="2" transform="rotate(-15 37 44)" /> <!-- Right leg (in bowling stance) -->
+                            <rect x="37" y="24" width="15" height="4" fill="#EF4444" rx="2" transform="rotate(-30 37 24)" /> <!-- Raised bowling arm -->
+                            <!-- Cricket ball -->
+                            <circle cx="50" cy="20" r="5" fill="#DC2626" /> <!-- Red ball -->
+                            <path d="M48 17 L52 23" stroke="#FFFFFF" stroke-width="1" /> <!-- Seam -->
+                            <path d="M52 17 L48 23" stroke="#FFFFFF" stroke-width="1" /> <!-- Cross seam -->
+                        </svg>
+                        <span class="text-xs mt-1 font-bold">BOWLER</span>
+                    </div>
+                    
+                    <!-- Cricket ball with seam -->
+                    <div id="ball" class="hidden absolute w-5 h-5 bg-red-600 rounded-full shadow-lg">
+                        <div class="w-full h-full relative">
+                            <div class="absolute top-1/2 left-0 right-0 h-0.5 bg-white transform -translate-y-1/2"></div>
+                            <div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white transform -translate-x-1/2"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cricket bat with better design -->
+                    <div id="bat" class="hidden absolute w-3 h-16 overflow-visible">
+                        <div class="w-3 h-4 bg-gradient-to-b from-gray-700 to-yellow-800 rounded-t-sm"></div>
+                        <div class="w-6 h-12 -ml-1.5 bg-gradient-to-b from-yellow-700 to-yellow-900 rounded-b-md"></div>
+                    </div>
+                    
+                    <!-- Crowd of animals -->
+                    <div class="absolute top-0 left-0 right-0 h-10 bg-indigo-900 bg-opacity-70 overflow-hidden">
+                        <div class="crowd-animation flex">
+                            <!-- Will be filled by JS -->
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-10 bg-indigo-900 bg-opacity-70 overflow-hidden">
+                        <div class="crowd-animation flex">
+                            <!-- Will be filled by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="commentary glass-card p-4 mb-8 h-24 overflow-y-auto shadow-xl">
+                <p id="commentary-text" class="text-xl font-medium">The jungle match is about to begin!</p>
+            </div>
+            
+            <div class="shot-buttons grid grid-cols-3 gap-4 mb-6">
+                <button class="shot-btn btn-3d bg-gradient-to-br from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 py-4 rounded-xl font-bold text-white transition-all relative overflow-hidden" data-shot="defensive">
+                    <span class="relative z-10">Defensive</span>
+                </button>
+                <button class="shot-btn btn-3d bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 py-4 rounded-xl font-bold text-white transition-all relative overflow-hidden" data-shot="drive">
+                    <span class="relative z-10">Cover Drive</span>
+                </button>
+                <button class="shot-btn btn-3d bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 py-4 rounded-xl font-bold text-white transition-all relative overflow-hidden" data-shot="sweep">
+                    <span class="relative z-10">Sweep</span>
+                </button>
+                <button class="shot-btn btn-3d bg-gradient-to-br from-pink-600 to-pink-700 hover:from-pink-500 hover:to-pink-600 py-4 rounded-xl font-bold text-white transition-all relative overflow-hidden" data-shot="pull">
+                    <span class="relative z-10">Pull Shot</span>
+                </button>
+                <button class="shot-btn btn-3d bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 py-4 rounded-xl font-bold text-white transition-all relative overflow-hidden" data-shot="hook">
+                    <span class="relative z-10">Hook</span>
+                </button>
+                <button class="shot-btn btn-3d bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 py-4 rounded-xl font-bold text-white transition-all relative overflow-hidden" data-shot="helicopter">
+                    <span class="relative z-10">Helicopter</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden text-center">
+            <div class="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-2xl p-8 shadow-2xl border border-blue-700 max-w-3xl mx-auto">
+                <h2 id="result-title" class="text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500"></h2>
+                <div id="result-details" class="text-2xl mb-10 text-blue-100"></div>
+                <div class="mb-10 transform hover:scale-105 transition-transform duration-300">
+                    <div class="relative inline-block">
+                        <div class="absolute inset-0 bg-white opacity-10 blur-xl rounded-full"></div>
+                        <div id="result-icon" class="mx-auto w-72 h-72 relative z-10 floating flex items-center justify-center">
+                            <i class="fas fa-trophy fa-10x text-yellow-400"></i>
+                        </div>
+                    </div>
+                </div>
+                <button id="play-again" class="shine-button bg-gradient-to-r from-yellow-500 to-red-500 hover:from-yellow-600 hover:to-red-600 text-white font-bold py-4 px-10 rounded-full text-xl transition-all transform hover:scale-105 shadow-xl">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center text-blue-300 py-6 mt-12">
+        <p class="text-lg">© 2023 Animal Cricket League | Wild fun for cricket fans!</p>
+    </footer>
+
+    <script>
+        // Create animated star background
+        document.addEventListener('DOMContentLoaded', () => {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.width = `${Math.random() * 3}px`;
+                star.style.height = star.style.width;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDuration = `${Math.random() * 3 + 1}s`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                
+                // Style the stars
+                star.style.backgroundColor = '#fff';
+                star.style.borderRadius = '50%';
+                star.style.position = 'absolute';
+                star.style.opacity = Math.random() * 0.8 + 0.2;
+                star.style.animation = 'pulse 2s infinite ease-in-out';
+                
+                starsContainer.appendChild(star);
+            }
+            
+            // Create jungle ambiance with falling leaves
+            createFallingLeaves();
+            
+            // Create crowd animation with animal emojis
+            const crowdContainers = document.querySelectorAll('.crowd-animation');
+            const animalEmojis = ['🦁', '🐘', '🐅', '🐒', '🦊', '🦏', '🐆', '🦅'];
+            
+            crowdContainers.forEach(container => {
+                for (let i = 0; i < 25; i++) {
+                    const person = document.createElement('div');
+                    const randomAnimal = animalEmojis[Math.floor(Math.random() * animalEmojis.length)];
+                    person.classList.add('crowd-person', 'mx-1', 'text-lg');
+                    person.textContent = randomAnimal;
+                    person.style.animation = `pulse ${Math.random() * 2 + 1}s infinite ease-in-out`;
+                    person.style.animationDelay = `${Math.random()}s`;
+                    container.appendChild(person);
+                }
+            });
+        });
+        
+        function createFallingLeaves() {
+            const container = document.getElementById('stadium-3d-container');
+            if (!container) return; // Add null check to avoid errors
+            
+            const leafColors = ['#4CAF50', '#8BC34A', '#CDDC39', '#388E3C', '#689F38'];
+            
+            // Create initial set of leaves
+            for (let i = 0; i < 10; i++) {
+                createLeaf(container, leafColors);
+            }
+            
+            // Periodically add new leaves
+            setInterval(() => {
+                if (Math.random() > 0.7) { // 30% chance to create a new leaf
+                    createLeaf(container, leafColors);
+                }
+            }, 2000);
+        }
+        
+        function createLeaf(container, colors) {
+            if (!container) return; // Add null check to avoid errors
+            
+            const leaf = document.createElement('div');
+            leaf.classList.add('leaf');
+            
+            // Random leaf styling
+            leaf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            leaf.style.width = `${Math.random() * 15 + 10}px`;
+            leaf.style.height = `${Math.random() * 5 + 5}px`;
+            leaf.style.left = `${Math.random() * 100}%`;
+            leaf.style.animationDuration = `${Math.random() * 5 + 5}s`;
+            leaf.style.position = 'absolute';
+            leaf.style.zIndex = '5';
+            
+            // Add leaf to container
+            container.appendChild(leaf);
+            
+            // Remove leaf after animation completes
+            setTimeout(() => {
+                if (leaf.parentNode) {
+                    leaf.parentNode.removeChild(leaf);
+                }
+            }, 10000);
+        }
+    </script>
+    <script src="game.js"></script>
+</body>
+</html> 
