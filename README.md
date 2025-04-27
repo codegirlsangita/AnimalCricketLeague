@@ -1,10 +1,10 @@
-# IPL Cricket Challenge
+# APL - Animal Premier League
 
-An interactive cricket game based on the Indian Premier League (IPL) created with HTML, Tailwind CSS, and JavaScript.
+An interactive cricket game based on the Animal Premier League (APL) created with HTML, Tailwind CSS, and JavaScript.
 
 ## Features
 
-- Choose your favorite IPL team from all 8 franchises
+- Choose your favorite APL team from all 8 franchises
 - Play a 5-over match against a random opponent team
 - Beautiful animations and visual effects
 - Dynamic commentary
@@ -17,7 +17,7 @@ An interactive cricket game based on the Indian Premier League (IPL) created wit
 
 1. Open `index.html` in your web browser
 2. Click "Start Game" on the welcome screen
-3. Select your favorite IPL team
+3. Select your favorite APL team
 4. The game will randomly decide who bats first
 5. If you're batting, use the different shot buttons to play:
    - **Defensive**: Safe option with low risk of wickets but also low boundary potential
@@ -45,13 +45,13 @@ An interactive cricket game based on the Indian Premier League (IPL) created wit
 Simply clone this repository and open `index.html` in your web browser. No additional setup or installation is required.
 
 ```
-git clone https://github.com/yourusername/ipl-cricket-challenge.git
-cd ipl-cricket-challenge
+git clone https://github.com/yourusername/apl-animal-premier-league.git
+cd apl-animal-premier-league
 ```
 
 Then open `index.html` in your browser to start playing!
 
 ## Credits
 
-- IPL team logos and imagery belong to their respective IPL franchises
+- APL team logos and imagery belong to their respective APL franchises
 - Created with ❤️ for cricket fans! 
